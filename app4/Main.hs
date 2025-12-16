@@ -19,7 +19,6 @@ import qualified Data.Text.Lazy as TL
 import qualified Data.Text.Lazy.Encoding as TLE
 import Control.Monad (foldM, forever)
 import Prelude hiding (readFile)
-import Control.Concurrent.STM (newTVarIO, readTVarIO, modifyMVar)
 import Control.Concurrent (Chan, newChan, writeChan, readChan)
 
 
