@@ -19,7 +19,7 @@ char (c:cs) = Right (c, cs)
 char [] = Left "No character available"
 
 digit :: Parser Char
-digit input@(c:cs)
+digit (c:cs)
   | isDigit c = Right (c, cs)
   | otherwise = Left ("Expected digit, got: " ++ [c])
 digit [] = Left "Expected digit, got empty input"
@@ -39,20 +39,20 @@ string ('"':input) =
        _ -> Left "Unterminated string"
 string _ = Left "Expected quoted string"
 
-whitespace :: Parser String
-whitespace input = Right (takeWhile isSpace input, dropWhile isSpace input)
+_whitespace :: Parser String
+_whitespace input = Right (takeWhile isSpace input, dropWhile isSpace input)
 
 -- Repetition combinators
-many :: Parser a -> Parser [a]
-many p input = case p input of
-  Right (v, rest) -> case many p rest of
+_many :: Parser a -> Parser [a]
+_many p input = case p input of
+  Right (v, rest) -> case _many p rest of
     Right (vs, rest') -> Right (v:vs, rest')
     Left _ -> Right ([v], rest)
   Left _ -> Right ([], input)
 
-many1 :: Parser a -> Parser [a]
-many1 p input = case p input of
-  Right (v, rest) -> case many p rest of
+_many1 :: Parser a -> Parser [a]
+_many1 p input = case p input of
+  Right (v, rest) -> case _many p rest of
     Right (vs, rest') -> Right (v:vs, rest')
     Left _ -> Right ([v], rest)
   Left e -> Left e
@@ -150,8 +150,8 @@ pmap f p input =
     Right (v, rest) -> Right (f v, rest)
 
 
-specificChar :: Char -> Parser Char
-specificChar expected input = case char input of
+_specificChar :: Char -> Parser Char
+_specificChar expected input = case char input of
   Right (c, rest) | c == expected -> Right (c, rest)
                   | otherwise -> Left ("Expected '" ++ [expected] ++ "', got '" ++ [c] ++ "'")
   Left e -> Left e
@@ -388,7 +388,7 @@ parseShow :: Parser Lib1.Command
 parseShow input =
   case keyword "Show" input of
     Right (_, rest0) ->
-      case and2 ws id rest0 of
+      case and2 ws passThrough rest0 of
         Right ((_, rest1), _) ->
           case dropWhile (== ' ') rest1 of
             ('P':'l':'a':'y':'e':'r':'s':rest) -> Right (Lib1.ShowPlayers, rest)
@@ -400,7 +400,7 @@ parseShow input =
         Left e -> Left e
     Left _ -> Left "Not Show"
   where
-    id x = Right (x, x)
+    passThrough x = Right (x, x)
 
 parseRemovePlayer :: Parser Lib1.Command
 parseRemovePlayer =
