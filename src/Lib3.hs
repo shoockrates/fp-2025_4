@@ -1,19 +1,18 @@
 {-# OPTIONS_GHC -Wno-orphans #-}
 {-# LANGUAGE LambdaCase #-}
 module Lib3(
-    emptyState, State(..), execute, load, save, storageOpLoop, StorageOp, Parser(..), parseCommand) where
+    emptyState, State(..), execute, load, save, storageOpLoop, StorageOp, Parser(..), parseCommand, applyCommand, stateToCommands) where
 
 import qualified Lib1
 import qualified Lib2
 
-import Data.List (isPrefixOf, find, intercalate)
+import Data.List (isPrefixOf)
 import Data.Char (isDigit, isSpace)
 import Data.Either (isRight)
-import Control.Concurrent.STM
-import Control.Concurrent.STM.TVar(TVar, readTVar, writeTVar)
+import Control.Concurrent.STM (atomically, TVar, readTVar, writeTVar)
+import Control.Concurrent.STM.TVar (readTVarIO)
 import Control.Concurrent (Chan, readChan, writeChan, newChan)
 import System.IO (writeFile)
-import System.IO.Strict (readFile)
 import qualified System.IO.Strict as Strict
 import Control.Applicative
 import Control.Monad (forever)
@@ -345,8 +344,8 @@ applyCommand state cmd = case cmd of
     let newBet = Bet bid pref tref amt btype pbid rref Nothing
     in state { bets = bets state ++ [newBet] }
   
-  Lib1.ResolveBet bre outcome ->
-    let updateBet b = if betId b == bre then b { outcome = Just outcome } else b
+  Lib1.ResolveBet bre betOutcome ->
+    let updateBet b = if betId b == bre then b { outcome = Just betOutcome } else b
     in state { bets = map updateBet (bets state) }
   
   Lib1.Deposit pref amt ->
@@ -408,8 +407,8 @@ stateToCommands state =
     betToCommand (Bet bid pref tref amt btype pbid rref _) =
       Lib2.toCliCommand (Lib1.PlaceBet bid pref tref amt btype pbid rref)
     
-    resolveBetToCommand (Bet bid _ _ _ _ _ _ (Just outcome)) =
-      [Lib2.toCliCommand (Lib1.ResolveBet bid outcome)]
+    resolveBetToCommand (Bet bid _ _ _ _ _ _ (Just betOutcome)) =
+      [Lib2.toCliCommand (Lib1.ResolveBet bid betOutcome)]
     resolveBetToCommand _ = []
     
     playerLimitsToCommands (Player pid _ _ dlimit wlimit mlimit) =
