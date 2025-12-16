@@ -5,7 +5,7 @@ module Lib4(runParser, parseCommand) where
 import qualified Lib1
 import Test.QuickCheck (Arbitrary, Gen, arbitrary, oneof, listOf, elements, choose)
 
-import Control.Applicative (Alternative(..), many, optional)
+import Control.Applicative (Alternative(..), optional)
 import Control.Monad.Trans.State.Strict (State, get, put, runState)
 import Control.Monad.Trans.Except (ExceptT(..), runExceptT)
 import Data.Char (isDigit, isSpace)
@@ -107,7 +107,7 @@ parseBetOutcome = ExceptT $ do
   case dropWhile isSpace input of
     ('W':'i':'n':rest) ->
       case runState (runExceptT (ws *> parseDouble)) rest of
-        (Right (v, _), rest') -> put rest' >> return (Right (Lib1.Win v))
+        (Right v, rest') -> put rest' >> return (Right (Lib1.Win v))
         _ -> return (Left "Expected number after Win")
     ('L':'o':'s':'e':rest) -> put rest >> return (Right Lib1.Lose)
     ('P':'u':'s':'h':rest) -> put rest >> return (Right Lib1.Push)
